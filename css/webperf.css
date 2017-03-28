@@ -1,0 +1,239 @@
+@font-face{
+  font-family:spotify-circular;
+  src:url(/assets/fonts/CircularSpUIT-Light.woff2) format('woff2'),url(../assets/fonts/CircularSpUIT-Light.woff) format('woff'),url(../assets/fonts/CircularSpUIT-Light.ttf) format('ttf');
+  font-weight:200;
+  font-style:normal
+}
+
+@font-face{font-family:spotify-circular;
+    src:url(../assets/fonts/CircularSpUIT-Book.woff2) format('woff2'),url(../assets/fonts/CircularSpUIT-Book.woff) format('woff'),url(../assets/fonts/CircularSpUIT-Book.ttf) format('ttf');
+    font-weight:400;
+    font-style:normal
+}
+@font-face{font-family:spotify-circular;
+      src:url(../assets/fonts/CircularSpUIT-Bold.woff2) format('woff2'),url(../assets/fonts/CircularSpUIT-Bold.woff) format('woff'),url(../assets/fonts/CircularSpUIT-Bold.ttf) format('ttf');
+      font-weight:600;
+      font-style:normal}
+
+.reveal{font-family:spotify-circular,Helvetica,Arial,sans-serif;}
+/*
+.reveal {
+  font-family: "Open Sans", "Source Sans Pro", Helvetica, sans-serif;
+}*/
+
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+  font-family: inherit;
+  text-transform: none;
+}
+
+.reveal section.simon-mosaic-container img {
+  border: 0;
+  padding: 0;
+  float: left;
+  width: 48%;
+  margin: 0;
+}
+
+.reveal .simon-web-performance img {
+  border: 0;
+  background: none;
+}
+
+.reveal .twitter {
+  padding: .2em;
+  color: #333;
+}
+
+.reveal .placeholder {
+  display: flex;
+  align-items: center;
+  margin-right: 1em;
+  width: 200px;
+  height: 200px;
+  border: 1px solid #000;
+}
+
+.reveal .placeholder-empty {
+  border-color: #666;
+}
+
+.reveal .placeholder-solid {
+  background-color: rgb(211, 194, 189);
+}
+
+.reveal .placeholder-wrapper {
+  display: flex;
+  width: 1000px;
+}
+
+.reveal .placeholder-label {
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
+}
+
+.reveal .placeholder-blur img {
+  margin: 0;
+  border: 0;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  -webkit-filter: blur(20px);
+  filter: blur(20px);
+}
+
+.reveal .swatches {
+  margin-right: 1em;
+  padding: 6px;
+}
+
+.reveal .swatch {
+  display: block;
+  float: left;
+  height: 17px;
+  margin-left: 2px;
+  margin-right: 2px;
+  width: 17px;
+}
+
+.reveal .webp ul {
+  list-style: none;
+  padding: 0;
+}
+
+.reveal .webp li {
+  width: 100px;
+  display: inline-block;
+  text-align: center;
+}
+
+.reveal .webp .webp-placeholder {
+  border: 1px solid #eee;
+  overflow: hidden;
+  width: 90%;
+}
+
+.reveal .webp img {
+  border: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+  width: 100%;
+  margin: 0;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.reveal .webp.blur img {
+  -webkit-filter: blur(3px);
+  filter: blur(3px);
+}
+
+input[type=range]{
+    background: transparent;
+    -webkit-appearance: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    height: 5px;
+    background: #343434;
+    border: none;
+    border-radius: 10px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #686868;
+    margin-top: -4px;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: #343434;
+}
+
+.burst .reveal .slide-background.present {
+  opacity: 0.5;
+}
+
+#pil-fragment {
+  transition: all 1s linear;
+  filter:blur(50px);
+  opacity: 1;
+  visibility: visible;
+}
+
+#pil-fragment.visible{
+  filter:none;
+}
+
+h2, h3 {
+  margin-bottom: 1em;
+  text-align: left;
+}
+
+twitterwidget {
+  display: inline-block !important;
+  vertical-align: top;
+  width: 350px !important;
+  margin: 1em;
+}
+
+.reveal pre {
+  font-size: 0.75em;
+  line-height: 1.5em;
+  width: 100%;
+}
+
+.fixed-header .fixed-header-wrapper {
+  display: flex;flex-direction: column;height: 100%;
+}
+
+.fixed-header header {
+  flex: 1 100%;
+}
+
+.fixed-header header {
+  flex: 1 100%;
+}
+
+.fixed-header main {
+  flex: 1 100%;
+  flex-basis: 550px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reveal .table-with-border tr, .reveal .table-with-border td {
+  border: 2px solid #ddd;
+  text-align: center;
+}
+/*h2::after, h3::after {
+    content: '';
+    height: 5px;
+    width: 50%;
+    background-color: #fff;
+    display: block;
+    margin-top: 0.1em;
+}*/
+
+.reveal code {
+  font-family: monospace, "Courier New", Courier;
+}
+
+.reveal blockquote {
+  font-style: normal;
+}
+
+.reveal ol {
+  width: 100%;
+}

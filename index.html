@@ -1,0 +1,691 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>Progressive Image Rendering</title>
+		<meta name="description" content="A talk by José M. Pérez at Render Conf 2017 on some techniques to lower the impact of images in our site's performance." />
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@jmperezperez">
+		<meta name="twitter:title" content="Progressive Image Rendering - Render Conf 2017">
+		<meta name="twitter:description" content="A talk on some techniques to lower the impact of images in our site's performance.">
+		<meta name="twitter:image" content="https://jmperezperez.com/renderconf17/assets/poster.png">
+		<link rel=author href="https://plus.google.com/107456024651797783420">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/night.css">
+		<link rel="stylesheet" href="css/webperf.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+		<script>!function(e,a,t,n,c,o,s){e.GoogleAnalyticsObject=c,e[c]=e[c]||function(){(e[c].q=e[c].q||[]).push(arguments)},e[c].l=1*new Date,o=a.createElement(t),s=a.getElementsByTagName(t)[0],o.async=1,o.src=n,s.parentNode.insertBefore(o,s)}(window,document,"script","//www.google-analytics.com/analytics.js","ga"),ga("create","UA-39254352-1","auto"),ga("send","pageview");</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+
+				<!-- intro -->
+				<section data-state="bg-title" data-background-color="#eff7e1" data-background-image="assets/backgrounds/pattern-01.svg">
+					<h1 style="color:#333;padding:0.7em 0 0"><strong>Progressive</strong> image rendering</h1>
+					<h2 style="text-align:center;color:#333;font-size:80%;padding-bottom:3em;font-weight:bold">Render Conf 2017</h2>
+					<div class="twitter">José M. Pérez · Web dev at Spotify</div>
+					<div class="twitter"><a href="https://twitter.com/jmperezperez" style="color:#111">@jmperezperez</a></div>
+					<aside class="notes">
+						<ul>
+							<li>Everybody loves fast sites</li>
+							<li>Why images are important</li>
+							<li>What we can do to reduce their impact</li>
+							<li>Tradeoffs</li>
+							<li>Myself</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section>
+					<h1>Images on the web</h1>
+					<aside class="notes">
+						<ul>
+							<li>Engage in discussions on JS/CSS</li>
+							<li>Images represent 2/3 of the bytes of pages</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section data-background-image="assets/skull.jpg" data-state="burst">
+					<!-- image from https://pixabay.com/es/calabera-cr%C3%A1neo-muertos-esqueleto-77949/ -->
+					<h1>To use or not to use images</h1>
+					<!-- example of hiding images on small viewports -->
+					<aside class="notes">
+						<ul>
+							<li>Try not to request an image</li>
+							<li>Also one less file to keep around (or many if responsive), and one less source file (eg PSD).</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section data-background-image="assets/minimalist-02.png">
+					<div></div>
+					<aside class="notes">
+						<ul>
+							<li>Flat design and minimalistic</li>
+							<li>Rounded corners, gradients, shadows.</li>
+							<li>Embrace it?</li>
+							<li>Fewer images in repo</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section>
+					<!-- example of hiding images on small viewports Hero image -->
+					<!-- https://open.spotify.com/track/4aebBr4JAihzJQR0CiIZJv?noredir=1 -->
+					<img src="assets/spotify-adele-hello-desktop.png" class="stretch" alt="Example of a background image on desktop" style="border:1px solid #333">
+				</section>
+
+				<section>
+					<!-- example of hiding images on small viewports Hero image -->
+					<!-- https://open.spotify.com/track/4aebBr4JAihzJQR0CiIZJv?noredir=1 -->
+					<img src="assets/spotify-adele-hello-mobile.png" class="stretch" alt="Same background image is mostly hidden on mobile" style="border:1px solid #333">
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Wrong way of hiding images (1/2)
+
+						```html
+						<img src="example.png"> <!-- it'll be requested -->
+						```
+
+						```css
+						@media (max-width: 480px) {
+							img {
+								display: none;
+							}
+						}
+						```
+					</script>
+					<aside class="notes">
+						Using CSS to hide an image won't prevent the browser from requesting the image. The browser requests any image referenced by the `<img>` tag regardless of the stylesheet.
+					</aside>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Wrong way of hiding images (2/2)
+
+						```html
+						<body>
+							<section class="section-1">
+								<p>This is the current section</p>
+								<img src="example-1.png">
+							</section>
+							<section class="section-2 hidden">
+								<p>This section might or might not be shown later</p>
+								<img src="example-2.png"> <!-- it'll be requested -->
+							</div>
+						</body>
+						```
+
+						```css
+						.hidden {
+							display: none;
+						}
+						```
+					</script>
+					<aside class="notes">
+						Using CSS to hide an image won't prevent the browser from requesting the image. The browser requests any image referenced by the `<img>` tag regardless of the stylesheet.
+					</aside>
+				</section>
+
+				<section class="optimisation">
+					<h1>Optimise your images</h1>
+					<h2 class="fragment" style="text-align:center;padding-top:1em">really</h2>
+					<aside class="notes">
+						<ul>
+							<li>Jpegoptim, Imageoptim</li>
+							<li>We have <strong>budget</strong> for other things.</li>
+							<li><strong>Structural Similarity</strong></li>
+						</ul>
+					</aside>
+				</section>
+
+				<section data-background-color="#185B68">
+					<h2 style="padding-bottom:1em">Picture element and srcset</h2>
+					<svg font-size="6" role="img" viewBox="0 0 115 32" font-family="sans-serif" class="full" aria-label="The
+rotated phone shows a top part of an image of a kettlebell swing; the upright-held tablet shows a
+bit smaller images in two columns; the laptop shows images in three columns.">
+
+ <rect width="12" fill="white" stroke="black" x="6" height="6" y="24" rx="1"></rect>
+ <rect fill="#987b5a" width="10" x="7" height="4.5" y="25"></rect>
+ <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="assets/kettlebell.jpg" preserveAspectRatio="xMinYMin slice" width="10" x="7" y="25" height="4.5"></image>
+ <text text-anchor="middle" x="12" y="21">1 column</text>
+
+ <rect width="14" fill="white" stroke="black" x="32" height="20" y="10" rx="1"></rect>
+ <line y2="29" stroke-width="1.1" stroke="black" x1="32" y1="29" x2="46"></line>
+ <rect fill="#987b5a" width="5.5" x="33" height="5.5" y="11"></rect>
+ <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="assets/kettlebell.jpg" width="5.5" x="33" y="11" height="5.5"></image>
+ <rect fill="burlywood" width="5.5" x="39.5" height="5.5" y="11"></rect>
+ <rect fill="silver" width="5.5" x="33" height="5.5" y="17.5"></rect>
+ <text text-anchor="middle" x="39" y="7">2 columns</text>
+
+ <rect width="40" stroke-width="2" fill="white" stroke="black" x="65" height="26" y="2" rx="2"></rect>
+ <line y2="30" stroke-linecap="round" stroke-width="2" stroke="black" x1="61" y1="30" x2="109"></line>
+ <rect fill="#987b5a" width="10" x="67" height="10" y="4"></rect>
+ <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="assets/kettlebell.jpg" width="10" x="67" y="4" height="10"></image>
+ <rect fill="burlywood" width="10" x="80" height="10" y="4"></rect>
+ <rect fill="silver" width="10" x="93" height="10" y="4"></rect>
+ <text text-anchor="middle" x="85" y="25">3 columns</text>
+</svg>
+<p>Illustration from WHATWG HTML spec</p>
+				</section>
+
+				<section data-markdown>
+    <script type="text/template">
+					## 1st issue: Keeping in sync markup and CSS
+
+```html
+<img sizes="(max-width: 30em) 100vw,
+            (max-width: 50em) 50vw,
+            calc(33vw - 100px)"
+     srcset="swing-200.jpg 200w,
+             swing-400.jpg 400w,
+             swing-800.jpg 800w,
+             swing-1600.jpg 1600w"
+     src="swing-400.jpg" alt="Kettlebell Swing">
+```
+	</script>
+	<aside class="notes">
+		It is difficult to maintain HTML and CSS in sync. Imagine we are using LESS/SASS variables to define the breakpoints. How do we import and use them in the markup?
+
+		Say you make a change in CSS, you need to make sure the HTML is also updated.
+	</aside>
+				</section>
+
+				<section data-markdown>
+				<script type="text/template">
+					## 2nd issue: Lazy loading
+				</script>
+
+				<aside class="notes">
+					<ul>
+						<li>I feel like browsers don't do enough.</li>
+						<li>Most users don’t scroll through the whole page, and it makes sense to delay the request of images below the fold until they are needed.</li>
+						<li>The good thing about doing it yourself is that it gives you fine tuning on when to load images. You can decide when to trigger the request, and what image you want to load. You can implement your own “responsive images” approach, choosing an image according to, for instance, available space.</li>
+				</aside>
+			</section>
+
+			<section data-background-color="#444444">
+				<div style="height:650px">
+					<h3 style="float:left;display:inline-block;width:50%;padding:5em 0">Combine <i>regular</i> images and lazy-loaded ones</h3>
+					<img src="assets/spotify/open-pages-structure.png" class="stretch" style="border:0; background-color: transparent;float:right;display:inline-block;height:100%"/>
+				</div>
+			</section>
+
+			<section data-markdown>
+				<script type="text/template">
+					## How to lazy load: Basic approach
+
+					- For all images, check whether they are in the viewport (or close enough). If they are, request it. <!-- .element: class="fragment" -->
+					- Repeat this onScroll and onResize <!-- .element: class="fragment" -->
+				</script>
+				<aside class="notes">
+					<ul>
+						<li>Checking the dimensions of elements trigger relayouts</li>
+						<li>Binding blindly on scroll can produce stuttering</li>
+						<li>Cache dimensions and positions of some elements</li>
+						<li>and use throttling and debouncing to execute the scroll callback fewer times.</li>
+					</ul>
+				</aside>
+			</section>
+
+			<section data-markdown>
+				<script type="text/template">
+					## How to lazy load: IntersectionObserver
+
+					- Don't bind to the scroll event. Subscribe to an event triggered when the image enters the rendered area<!-- .element: class="fragment" -->
+					- Supported in Chrome, Opera. In development in Firefox and Edge.<!-- .element: class="fragment" -->
+					- Very easy to use as another strategy in your lazy loading library.<!-- .element: class="fragment" -->
+				</script>
+				<aside class="notes">
+					There is an experimental API called IntersectionObserver that suits very well this use case. Instead of binding to the scroll event, and then go through the lazy-loaded images, IntersectionObserver allows us to subscribe to an event triggered when the image enters the rendered area (viewport).
+				</aside>
+			</section>
+
+			<section>
+				<h2>IntersectionObserver</h2>
+				<img src="assets/intersectionobserver.gif" class="stretch"/>
+
+				<aside class="notes">
+					IntersectionObserver can also be used to lazy-load other elements on the page. In Spotify we have used it to implement an infinite list React component, so we subscribe to either rows or pages of rows.
+				</aside>
+			</section>
+
+				<section data-background-color="#524c5a">
+					<h1>What to show while the image is loading</h1>
+					<aside class="notes">
+						<ul>
+							<li><strong>Hero images and Text on images</strong></li>
+						</ul>
+					</aside>
+				</section>
+
+				<section>
+					<h3>Alternatives</h3>
+					<div class="placeholder-wrapper" style="height:300px">
+						<div class="placeholder placeholder-empty fragment">
+							<div class="placeholder-label"></div>
+						</div>
+						<div class="placeholder placeholder-icon fragment">
+							<div class="placeholder-label">
+								<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+		 							width="311.541px" height="311.541px" viewBox="0 0 311.541 311.541" xml:space="preserve"
+									style="fill: #666; width: 100%;">
+									<g>
+										<g>
+											<path d="M155.771,26.331C69.74,26.331,0,96.071,0,182.102c0,37.488,13.25,71.883,35.314,98.761
+												c3.404-27.256,30.627-50.308,68.8-61.225c13.946,12.994,31.96,20.878,51.656,20.878c19.233,0,36.894-7.487,50.698-19.936
+												c38.503,11.871,65.141,36.27,66.017,64.63c24.284-27.472,39.056-63.555,39.056-103.108
+												C311.541,96.071,241.801,26.331,155.771,26.331z M155.771,222.069c-9.944,0-19.314-2.732-27.634-7.464
+												c-20.05-11.409-33.855-34.756-33.855-61.711c0-38.143,27.583-69.176,61.489-69.176c33.909,0,61.489,31.033,61.489,69.176
+												c0,27.369-14.237,51.004-34.786,62.215C174.379,219.523,165.346,222.069,155.771,222.069z"/>
+										</g>
+									</g>
+								</svg>
+							</div>
+						</div>
+						<div class="fragment">
+							<div class="placeholder placeholder-solid">
+								<div class="placeholder-label"></div>
+							</div>
+							<div class="swatches">
+			            <div class="swatch" style="background-color: rgb(20, 59, 51)"></div>
+			            <div class="swatch" style="background-color: rgb(210, 208, 207)"></div>
+			            <div class="swatch" style="background-color: rgb(149, 75, 54)"></div>
+			            <div class="swatch" style="background-color: rgb(195, 111, 77)"></div>
+			            <div class="swatch" style="background-color: rgb(202, 129, 111)"></div>
+			            <div class="swatch" style="background-color: rgb(227, 157, 133)"></div>
+			            <div class="swatch" style="background-color: rgb(128, 133, 130)"></div>
+			            <div class="swatch" style="background-color: rgb(209, 160, 154)"></div>
+			            <div class="swatch" style="background-color: rgb(82, 161, 152)"></div>
+			        </div>
+						</div>
+						<div class="placeholder placeholder-blur fragment">
+							<div class="placeholder-label">
+								<img src="assets/avatar.png">
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section data-background-color="#8C0F04">
+					<h1>Examples of <span style="background-color:#660B03;padding:0 1em;display:inline-block">solid color</span></h1>
+				</section>
+
+				<section>
+					<img src="assets/lofi-english-nov-24.gif" class="stretch"/>
+				</section>
+
+				<section>
+					<video loop autoplay controls class="stretch" poster="assets/google-arts-culture-poster.jpg">
+						<source type="video/webm" src="assets/google-arts-culture.webm" />
+						<source type="video/mp4" src="assets/google-arts-culture.mp4" />
+					</video>
+				</section>
+
+				<section>
+					<video loop autoplay controls class="stretch" poster="assets/google-image-search-poster.jpg">
+						<source type="video/webm" src="assets/google-image-search.webm" />
+						<source type="video/mp4" src="assets/google-image-search.mp4" />
+					</video>
+				</section>
+
+				<section>
+					<h1>Examples of <div class="fragment" id="pil-fragment">Progressive Image Loading</div></h1>
+					<aside class="notes">
+						Take a flight with Norwegian and use their Wi-Fi. Or go to a place where good internet connection is a luxury.
+					</aside>
+				</section>
+
+				<section>
+					<h2>Medium</h2>
+					<video loop autoplay controls class="stretch" poster="assets/medium-progressive-loading-poster.png">
+						<source type="video/webm" src="assets/medium-progressive-loading.webm" />
+						<source type="video/mp4" src="assets/medium-progressive-loading.mp4" />
+					</video>
+					<aside class="notes">
+						- Also known as blur-up technique
+						- Also on some other sites like http://qz.com/
+						- Noticeable in slower networks
+					</aside>
+				</section>
+
+				<section>
+					<h2>How it's done</h2>
+					<img src="assets/medium-codepen.png" class="stretch"/>
+					<ol>
+						<li class="fragment">Use &lt;div&gt; to render the image</li>
+						<li class="fragment">Request small thumbnail</li>
+						<li class="fragment">Draw thumbnail to &lt;canvas/&gt; and apply blur effect</li>
+						<li class="fragment">Request large image</li>
+						<li class="fragment">Render large image and hide &lt;canvas/&gt;</li>
+					</ol>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+					### Markup Overview
+					```html
+					<figure>
+					  <div>
+					    <div/> <!-- this div keeps the aspect ratio so
+							        the placeholder doesn't collapse -->
+					    <img/> <!-- this is a tiny image with a small
+                resolution (e.g. ~27x17) and low quality -->
+					    <canvas/> <!-- takes the above image and applies a blur filter -->
+					    <img/> <!-- the large image to be displayed -->
+					    <noscript/> <!-- fallback for no JS -->
+					  </div>
+					</figure>
+					```
+					</script>
+				</section>
+
+				<section>
+					<h3>How do users perceive it?</h3>
+					<div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Did <a href="https://twitter.com/Medium">@Medium</a> recently add a new image loading fade-in? I noticed it this morning on mobile and just now again on web. Looks nice.</p>&mdash; Jason (@lang) <a href="https://twitter.com/lang/status/704381934433009664">February 29, 2016</a></blockquote>
+						</div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr"><a href="https://twitter.com/Medium">@Medium</a>&#39;s articles (although full of high-res images) load up very fast *-*</p>&mdash; DobaKung (@zartre) <a href="https://twitter.com/zartre/status/581646615590502400">March 28, 2015</a></blockquote>
+						</div>
+					</div>
+				</section>
+
+				<section>
+					<h3>or maybe not?</h3>
+					<div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr">I don&#39;t know about you but I don&#39;t like a bit those blurry (still loading...) images on Medium. Very distracting.</p>&mdash; Harris Rodis (@harrisrodis) <a href="https://twitter.com/harrisrodis/status/681877502105628672">December 29, 2015</a></blockquote>
+						</div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr">That blurry image preloading thing on Medium - is it just me or does it make all images load extremely slowly now?</p>&mdash; James Young (@welcomebrand) <a href="https://twitter.com/welcomebrand/status/695545792040472577">February 5, 2016</a></blockquote>
+						</div>
+            <div style="clear:both"></div>
+					</div>
+					<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+				</section>
+
+				<section>
+					<img src="assets/progressive-jpeg-vs-baseline-jpg.jpg" class="stretch">
+					<div><small>Source: <a href="http://www.wpexplorer.com/optimize-images-wordpress-guide/">wpexplorer.com/optimize-images-wordpress-guide</a></small></div>
+				</section>
+				<section>
+					<blockquote>
+						<p>With the Progressive JPEG method [...] <strong>cognitive fluency is inhibited and the brain has to work slightly harder to make sense of what is being displayed</strong>.</p><small>&mdash; From <a href="http://www.webperformancetoday.com/2014/09/17/progressive-image-rendering-good-evil/">Progressive image rendering: Good or evil?</a></small>
+					</blockquote>
+				</section>
+
+				<section>
+					<h3>Reliable?</h3>
+					<div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr">I&#39;m seeing this more and more on Medium posts. Maybe the whole &quot;blur the pictures&quot; stuff isn&#39;t a good idea… <a href="https://t.co/X8wLBDHHFw">pic.twitter.com/X8wLBDHHFw</a></p>&mdash; Damien Erambert (@Eramdam) <a href="https://twitter.com/Eramdam/status/685532496168103936">January 8, 2016</a></blockquote>
+						</div>
+						<div style="width:45%;float:left;padding:2%">
+							<blockquote class="twitter-tweet"><p lang="en" dir="ltr">This <a href="https://twitter.com/Medium">@Medium</a> page is fully loaded on my slow connection. Very pretty with those stupid image effects, isn’t it? <a href="https://t.co/kLwlyWRLhc">pic.twitter.com/kLwlyWRLhc</a></p>&mdash; Sara Soueidan (@SaraSoueidan) <a href="https://twitter.com/SaraSoueidan/status/670589926929539072">November 28, 2015</a></blockquote>
+						</div>
+					</div>
+				</section>
+
+				<!--
+				<section>
+					<h3>What effect does it have on RSS Readers and bots?</h3>
+					<blockquote class="twitter-tweet"><p lang="en" dir="ltr"><a href="https://twitter.com/Medium">@Medium</a> your weird blurry image thing means that when I read an article offline from my Safari Reading List, I don’t get any images 😞</p>&mdash; Brad Dougherty (@bdougherty) <a href="https://twitter.com/bdougherty/status/662775130968473601">November 6, 2015</a></blockquote>
+				</section>
+				-->
+				<!--
+				More tweets
+				https://twitter.com/SaraSoueidan/status/747533141959544832
+				https://twitter.com/jitendravyas/status/769914449612464129
+				-->
+				<section class="fixed-header">
+					<div class="fixed-header-wrapper">
+						<header>
+							<h3>Facebook - Inlining thumbnail image in payload</h3>
+						</header>
+						<main style="flex-direction: column;">
+							<img src="assets/facebook/preview-photos-graphql.jpg" style="width: 70%">
+							<img src="assets/facebook/preview-photos.jpg" class="fragment" style="width: 70%">
+							<small>Source: <a href="http://goo.gl/o3oYfW">The technology behind preview photos</a></small>
+						</main>
+					</div>
+					<aside class="notes">
+						<ul>
+							<li>Mention 42x42px</li>
+							<li>This is especially true on low-connectivity or mobile networks, which often leave you staring at an empty gray box as you wait for images to download. This is a problem in developing markets such as India, where many people new to Facebook are primarily using 2G networks.</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="fixed-header">
+					<div class="fixed-header-wrapper">
+						<header>
+							<h3>Facebook - Inlining thumbnail image in payload</h3>
+						</header>
+						<main>
+							<blockquote><p>
+								Unfortunately, the standard JPEG header is hundreds of bytes in size. In fact, <strong>the JPEG header alone is several times bigger than our entire 200-byte budget</strong>. However, excluding the JPEG header, the encoded data payload itself was approaching our 200 bytes.
+							</p></blockquote>
+						</main>
+					</div>
+				</section>
+				<section class="fixed-header">
+					<div class="fixed-header-wrapper">
+						<header>
+							<h3>Facebook - Inlining thumbnail image in payload</h3>
+						</header>
+						<main style="flex-direction: column;">
+							<div style="height:200px">
+								<table class="table-with-border" style="width:100%">
+									<tr>
+										<td style="width:75%">Header (mainly Quantization Table and Huffman Table)</td>
+										<td style="width:25%">Compressed Data</td>
+									</tr>
+								</table>
+								<table style="width:100%;margin-top:0.5em;" class="fragment">
+									<tr>
+										<td style="text-align:center;width:75%;font-size:80%;color:#ddd">Client (mobile app)</td>
+										<td style="text-align:center;width:25%;font-size:80%;color:#ddd">GraphQL</td>
+									</tr>
+								</table>
+							</div>
+						</main>
+					</div>
+				</section>
+
+				<section class="fixed-header">
+					<div class="fixed-header-wrapper">
+						<header>
+							<h3>Generating tiny thumbnails</h3>
+						</header>
+						<main style="flex-direction: column;">
+							<div style="padding-bottom:1em">
+								<h4>JPG</h4>
+								<ul class="webp">
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/01.jpg"></div>464 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/02.jpg"></div>532 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/03.jpg"></div>428 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/04.jpg"></div>409 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/05.jpg"></div>456 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/06.jpg"></div>692 B</li>
+								</ul>
+							</div>
+							<div class="fragment">
+							<h4>WebP</h4>
+							<ul class="webp">
+								<li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/01.jpg"></div>112 B</li>
+						    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/02.jpg"></div>154 B</li>
+						    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/03.jpg"></div>106 B</li>
+						    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/04.jpg"></div>96 B</li>
+						    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/05.jpg"></div>116 B</li>
+						    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/06.jpg"></div>202 B</li>
+							</ul>
+						</div>
+					</main>
+				</div>
+				</section>
+
+				<section class="fixed-header">
+					<div class="fixed-header-wrapper">
+						<header>
+							<h3>Generating tiny thumbnails</h3>
+						</header>
+						<main style="flex-direction: column;">
+							<div style="padding-bottom:1em">
+								<h4>JPG</h4>
+								<ul class="webp blur">
+									<li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/01.jpg"></div>464 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/02.jpg"></div>532 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/03.jpg"></div>428 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/04.jpg"></div>409 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/05.jpg"></div>456 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-jpg/06.jpg"></div>692 B</li>
+								</ul>
+							</div>
+							<div>
+								<h4>WebP</h4>
+								<ul class="webp blur">
+									<li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/01.jpg"></div>112 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/02.jpg"></div>154 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/03.jpg"></div>106 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/04.jpg"></div>96 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/05.jpg"></div>116 B</li>
+							    <li><div class="webp-placeholder"><img src="assets/webp-preview/42-webp-to-jpg/06.jpg"></div>202 B</li>
+								</ul>
+							</div>
+						</main>
+					</div>
+				</section>
+
+				<section>
+					<h1>Getting <span>creative</span> with SVGs</h1>
+				</section>
+
+				<section data-background-color="#03aad6">
+					<video loop autoplay controls poster="assets/polygon-ps4-poster.jpg" class="stretch">
+						<source type="video/webm" src="assets/polygon-ps4.webm" />
+						<source type="video/mp4" src="assets/polygon-ps4.mp4" />
+					</video>
+					<div><small>Source: <a style="color:#eee" href="http://www.polygon.com/a/ps4-review">polygon.com/a/ps4-review</a></small></div>
+				</section>
+
+				<section>
+					<h3>How it works</h3>
+					<iframe scrolling='no' class="stretch" src='//codepen.io/jmperez/embed/rxxRRg/?height=525&theme-id=0&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='http://codepen.io/jmperez/pen/rxxRRg/'>Drawing SVGs - Spotify Logo</a> by José Manuel Pérez (<a href='http://codepen.io/jmperez'>@jmperez</a>) on <a href='http://codepen.io'>CodePen</a>.
+					</iframe>
+					<div><small>More info: <a href="https://jakearchibald.com/2013/animated-line-drawing-svg/">jakearchibald.com/2013/animated-line-drawing-svg</a></small></div>
+					<aside class="notes">
+						This can be applied directly to SVGs. However, the whole talk is focused on bitmap images, for which we don't have any SVG line unless we vectorize it.
+
+						But there is hope.
+					</aside>
+				</section>
+
+				<section>
+					<h3>Drawing bitmap images</h3>
+					<img src="assets/canny.jpg" class="stretch"/>
+					<p>Canny Edge Detector</p>
+					<aside class="notes">
+						- No need to vectorize an image
+					</aside>
+				</section>
+
+				<section data-background-iframe="ext-slides/contour2/index.html">
+				</section>
+
+				<section data-markdown>
+	    		<script type="text/template">
+### How to draw bitmaps
+
+1. Find edges with canny edge detector
+2. Create lines
+3. Use JS and SVG to animate
+
+```html
+<svg>
+  <polyline points="51,1 61,1 61,2 56,4 56,3"/>
+  <polyline points="52,1 50,2 51,3 50,4 50,9 46,10 46,8 48,8 48,9"/>
+  <polyline points="61,4 61,5 58,6"/>
+  ...
+  <polyline points="62,58 61,59 61,60 50,62 50,61 51,61"/>
+</svg>
+```
+<!-- .element: class="fragment" -->
+		</script>
+		<div class="aside">
+			- We can tweak how many lines we want to generate. Eg prune short ones. Can be improved a lot.
+		</div>
+				</section>
+
+				<section>
+					<h1>Should we do this?</h1>
+					<p>Just because you can it doesn't mean you should</p>
+					<aside class="notes">
+						<ul>
+							<li>It might be enough with using progressive JPEGs...</li>
+							<li>or not using anything at all.</li>
+							<li>Don't couple. Make it revertible.</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h1>The Web is <span style="color:#ca4444">fun</span>.</h1>
+					<aside class="notes">
+						<ul>
+							<li>Open</li>
+							<li>I learned from other sites</li>
+							<li>Never stop exploring and experimenting.</li>
+					</aside>
+				</section>
+
+				<section>
+					<h2 style="text-align:center"><a href="https://www.spotify.com/jobs/" style="color:rgb(30, 215, 96)">spotify.com/jobs</a></h2>
+				</section>
+
+				<section data-state="thanks" data-background-iframe="thanks.html">
+					<h1 style="color:#eee;padding:0.2em 0;margin:0">Thanks!</h1>
+					<div class="twitter"><a href="https://twitter.com/jmperezperez" style="color:#eee">@jmperezperez</a></div>
+				</section>
+
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal-min.js"></script>
+		<script>
+
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				transition: 'fade',
+				controls: false,
+				history: true,
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
